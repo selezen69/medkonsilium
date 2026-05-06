@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>РиелторCRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0F1923;
+  --ink2: #1E2D3D;
+  --slate: #2C4158;
+  --mid: #4A6FA5;
+  --accent: #FF6B35;
+  --accent2: #FFB347;
+  --teal: #2EC4B6;
+  --green: #06D6A0;
+  --red: #EF233C;
+  --yellow: #FFD166;
+  --white: #FFFFFF;
+  --fog: #F4F6F9;
+  --fog2: #E8ECF2;
+  --mist: #C8D3E0;
+  --text: #0F1923;
+  --text2: #4A6078;
+  --text3: #8A9BB0;
+  --r: 14px; --rs: 8px; --rl: 20px;
+  --sh: 0 2px 16px rgba(15,25,35,.08);
+  --shl: 0 8px 40px rgba(15,25,35,.14);
+  --tr: .18s cubic-bezier(.4,0,.2,1);
+  --nav-h: 68px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Manrope',sans-serif;background:var(--fog);color:var(--text)}
+.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--fog2);border-radius:4px}
+
+/* ══ AUTH ══ */
+#auth{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--ink);padding:24px;position:relative;overflow:hidden}
+#auth::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(255,107,53,.15) 0%,transparent 70%);top:-200px;right:-200px;pointer-events:none}
+#auth::after{content:'';position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(46,196,182,.1) 0%,transparent 70%);bottom:-100px;left:-100px;pointer-events:none}
+.auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:36px;position:relative;z-index:1}
+.auth-brand-icon{width:48px;height:48px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 20px rgba(255,107,53,.4)}
+.auth-brand-name{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:700;color:white;letter-spacing:-.5px}
+.auth-brand-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;letter-spacing:.5px;text-transform:uppercase}
+.auth-card{background:white;border-radius:24px;padding:32px 28px;width:100%;max-width:420px;box-shadow:var(--shl);position:relative;z-index:1}
+.auth-tabs{display:flex;background:var(--fog);border-radius:10px;padding:4px;gap:4px;margin-bottom:28px}
+.auth-tab{flex:1;padding:10px;text-align:center;font-size:13.5px;font-weight:700;border-radius:8px;cursor:pointer;transition:var(--tr);color:var(--text3);border:none;background:transparent;font-family:'Manrope',sans-serif}
+.auth-tab.active{background:white;color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.auth-title{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.5px}
+.auth-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.3px;text-transform:uppercase}
+.field input{padding:13px 16px;border:2px solid var(--fog2);border-radius:var(--rs);font-size:15px;color:var(--text);outline:none;transition:var(--tr);background:white;font-family:'Manrope',sans-serif;width:100%}
+.field input:focus{border-color:var(--mid);box-shadow:0 0 0 4px rgba(74,111,165,.1)}
+.btn-auth{width:100%;padding:15px;background:var(--ink);color:white;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;transition:var(--tr);font-family:'Manrope',sans-serif;margin-top:8px;letter-spacing:-.2px}
+.btn-auth:active{background:var(--accent);transform:scale(.98)}
+.auth-err{font-size:13px;color:var(--red);padding:10px 14px;background:#FFF0F2;border-radius:var(--rs);border:1px solid #FFCCD3;margin-bottom:12px;display:none}
+
+/* ══ APP ══ */
+#app{display:none;height:100vh;height:100dvh;flex-direction:column}
+#app.on{display:flex}
+
+/* HEADER */
+.hdr{background:var(--ink);display:flex;align-items:center;padding:0 16px;height:56px;flex-shrink:0;gap:12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.hdr-brand{display:flex;align-items:center;gap:8px;flex:1}
+.hdr-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.hdr-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:white;letter-spacing:-.3px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.hdr-user{width:32px;height:32px;border-radius:50%;background:var(--mid);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;cursor:pointer;flex-shrink:0}
+.hdr-search{width:34px;height:34px;background:rgba(255,255,255,.1);border:none;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;color:rgba(255,255,255,.6)}
+.hdr-search:active{background:rgba(255,255,255,.2)}
+
+/* PAGES */
+.pages{flex:1;overflow:hidden;position:relative}
+.pg{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .2s ease;display:flex;flex-direction:column}
+.pg.on{opacity:1;pointer-events:auto}
+
+/* BOTTOM NAV */
+.bnav{height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:white;border-top:1px solid var(--fog2);display:flex;align-items:stretch;flex-shrink:0;box-shadow:0 -4px 20px rgba(15,25,35,.06)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;border:none;background:transparent;padding:8px 4px;transition:var(--tr)}
+.ni svg{width:22px;height:22px;transition:var(--tr)}
+.ni span{font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--text3);transition:var(--tr);text-transform:uppercase}
+.ni svg path,.ni svg rect,.ni svg circle{fill:var(--text3);transition:var(--tr)}
+.ni.on span{color:var(--accent)}
+.ni.on svg path,.ni.on svg rect,.ni.on svg circle{fill:var(--accent)}
+
+/* PAGE HEADER */
+.ph{background:white;padding:16px 16px 12px;border-bottom:1px solid var(--fog2);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.ph-left h2{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.4px}
+.ph-left p{font-size:12px;color:var(--text3);margin-top:3px;font-weight:500}
+.btn-add{width:36px;height:36px;background:var(--accent);border:none;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:white;flex-shrink:0;box-shadow:0 4px 12px rgba(255,107,53,.35);transition:var(--tr)}
+.btn-add:active{transform:scale(.92)}
+
+/* CARDS */
+.list{padding:12px;display:flex;flex-direction:column;gap:8px}
+.card{background:white;border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);cursor:pointer;transition:var(--tr);border:1.5px solid transparent;position:relative;overflow:hidden}
+.card:active{transform:scale(.98);border-color:var(--mid)}
+.card-accent-bar{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.card-row{display:flex;align-items:center;gap:12px}
+.card-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;flex-shrink:0;font-family:'Unbounded',sans-serif}
+.card-body{flex:1;min-width:0}
+.card-name{font-size:14.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
+.card-sub{font-size:12px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.2px}
+.card-meta{font-size:11px;color:var(--text3);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap}
+.card-meta span{display:flex;align-items:center;gap:4px}
+
+/* STATUS BADGES */
+.s-lead{background:#FFF3E8;color:#E8711A}
+.s-work{background:#E8F4FF;color:#1A6FB5}
+.s-show{background:#F0F8FF;color:#2980B9}
+.s-nego{background:#FFF8E1;color:#F39C12}
+.s-dep{background:#E8FFF6;color:#1A9E6E}
+.s-done{background:#F0FFF4;color:#27AE60}
+.s-fail{background:#FFF0F2;color:#C0392B}
+
+/* PIPELINE / KANBAN */
+#pg-pipe{background:var(--fog)}
+.pipe-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:12px;display:flex;gap:10px;flex-shrink:0}
+.pipe-scroll::-webkit-scrollbar{height:3px}
+.pipe-col{background:white;border-radius:var(--r);min-width:220px;max-width:220px;box-shadow:var(--sh);display:flex;flex-direction:column;max-height:calc(100vh - 200px)}
+.pipe-col-hdr{padding:12px 14px;border-bottom:1px solid var(--fog2);flex-shrink:0}
+.pipe-col-title{font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.pipe-col-title .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pipe-col-count{font-size:11px;color:var(--text3);margin-top:3px}
+.pipe-col-body{padding:8px;overflow-y:auto;flex:1}
+.pipe-card{background:var(--fog);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:var(--tr);border:1.5px solid transparent}
+.pipe-card:active{border-color:var(--mid);transform:scale(.97)}
+.pipe-card-name{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pipe-card-client{font-size:11.5px;color:var(--text3);margin-top:3px}
+.pipe-card-price{font-size:12px;font-weight:700;color:var(--accent);margin-top:4px}
+
+/* MODAL / DRAWER */
+.overlay{position:fixed;inset:0;background:rgba(15,25,35,.55);z-index:500;opacity:0;pointer-events:none;transition:opacity .25s ease}
+.overlay.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;bottom:0;left:0;right:0;background:white;border-radius:24px 24px 0 0;z-index:600;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:92vh;display:flex;flex-direction:column;padding-bottom:calc(20px + var(--safe-b))}
+.drawer.on{transform:translateY(0)}
+.drawer-handle{width:36px;height:4px;background:var(--fog2);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+.drawer-hdr{padding:16px 20px 14px;border-bottom:1px solid var(--fog2);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.drawer-hdr h3{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.3px}
+.drawer-close{width:30px;height:30px;background:var(--fog2);border:none;border-radius:8px;cursor:pointer;font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center}
+.drawer-body{padding:16px 20px;overflow-y:auto;flex:1}
+.form-field{margin-bottom:14px}
+.form-field label{display:block;font-size:11.5px;font-weight:700;color:var(--text2);letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:12px 14px;border:2px solid var(--fog2);border-radius:var(--rs);font-size:15px;color:var(--text);outline:none;transition:var(--tr);background:white;font-family:'Manrope',sans-serif;appearance:none}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--mid);box-shadow:0 0 0 4px rgba(74,111,165,.1)}
+.form-field textarea{resize:vertical;min-height:80px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-submit{width:100%;padding:15px;background:var(--ink);color:white;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;transition:var(--tr);font-family:'Manrope',sans-serif;margin-top:8px}
+.btn-submit:active{background:var(--accent);transform:scale(.98)}
+.btn-danger{width:100%;padding:13px;background:transparent;color:var(--red);border:2px solid #FFCCD3;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;transition:var(--tr);font-family:'Manrope',sans-serif;margin-top:8px}
+
+/* DETAIL VIEW */
+.detail-header{background:var(--ink);padding:20px 16px 24px;flex-shrink:0}
+.detail-back{background:rgba(255,255,255,.1);border:none;border-radius:8px;padding:7px 12px;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;display:inline-flex;align-items:center;gap:6px;font-family:'Manrope',sans-serif}
+.detail-avatar{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;font-family:'Unbounded',sans-serif;margin-bottom:12px}
+.detail-name{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:700;color:white;letter-spacing:-.4px;margin-bottom:4px}
+.detail-sub{font-size:13px;color:rgba(255,255,255,.5)}
+.detail-actions{display:flex;gap:8px;margin-top:16px}
+.action-btn{flex:1;padding:10px 8px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:var(--tr);font-family:'Manrope',sans-serif;letter-spacing:.2px}
+.action-btn:active{transform:scale(.94)}
+.action-btn.call{background:rgba(6,214,160,.15);color:var(--green)}
+.action-btn.note{background:rgba(255,209,102,.15);color:#C49A00}
+.action-btn.edit{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+.action-btn.del{background:rgba(239,35,60,.12);color:var(--red)}
+.action-btn span{font-size:20px}
+.detail-body{padding:16px;display:flex;flex-direction:column;gap:10px}
+.info-card{background:white;border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+.info-card h4{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--fog);gap:12px}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:12.5px;color:var(--text3);flex-shrink:0}
+.info-val{font-size:13px;font-weight:600;color:var(--ink);text-align:right;word-break:break-word}
+.info-val a{color:var(--mid);text-decoration:none}
+.hist-item{padding:10px 0;border-bottom:1px solid var(--fog);display:flex;gap:10px}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.hist-text{font-size:13px;color:var(--text);line-height:1.5;flex:1}
+.hist-date{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* TASKS */
+.task-item{background:white;border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh);display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;cursor:pointer;transition:var(--tr)}
+.task-item:active{transform:scale(.98)}
+.task-check{width:22px;height:22px;border-radius:6px;border:2.5px solid var(--fog2);flex-shrink:0;margin-top:1px;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center}
+.task-check.done{background:var(--green);border-color:var(--green);color:white;font-size:13px}
+.task-body{flex:1}
+.task-title{font-size:14px;font-weight:600;color:var(--ink)}
+.task-title.done{text-decoration:line-through;color:var(--text3)}
+.task-meta{font-size:11.5px;color:var(--text3);margin-top:3px}
+.task-overdue{color:var(--red)!important}
+
+/* SEARCH */
+.search-bar{padding:10px 12px;background:white;border-bottom:1px solid var(--fog2);flex-shrink:0}
+.search-input{width:100%;padding:10px 14px 10px 38px;background:var(--fog);border:none;border-radius:10px;font-size:15px;color:var(--text);outline:none;font-family:'Manrope',sans-serif;position:relative}
+.search-wrap{position:relative}
+.search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;z-index:1}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.stat-card{background:white;border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.stat-num{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:700;color:var(--ink);letter-spacing:-1px}
+.stat-label{font-size:11.5px;color:var(--text3);margin-top:4px;font-weight:600}
+.stat-card.accent{background:var(--accent);background:linear-gradient(135deg,var(--accent),#FF9A5C)}
+.stat-card.accent .stat-num,.stat-card.accent .stat-label{color:white}
+.stat-card.teal{background:linear-gradient(135deg,var(--teal),#5BE5DC)}
+.stat-card.teal .stat-num,.stat-card.teal .stat-label{color:white}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--nav-h) + 12px + var(--safe-b));left:16px;right:16px;padding:13px 18px;background:var(--ink);color:white;border-radius:var(--rs);font-size:14px;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all .25s ease;pointer-events:none;text-align:center;box-shadow:var(--shl)}
+.toast.on{opacity:1;transform:translateY(0)}
+.toast.ok{background:var(--green);color:var(--ink)}
+.toast.err{background:var(--red)}
+
+.hidden{display:none!important}
+.empty{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty p{font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-brand">
+    <div class="auth-brand-icon">🏠</div>
+    <div>
+      <div class="auth-brand-name">РиелторCRM</div>
+      <div class="auth-brand-sub">Управление сделками</div>
+    </div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="authTab('in')">Войти</button>
+      <button class="auth-tab" onclick="authTab('up')">Регистрация</button>
+    </div>
+    <div id="af-in">
+      <div class="auth-title">С возвращением</div>
+      <div class="auth-sub">Войдите в свой аккаунт</div>
+      <div id="err-in" class="auth-err"></div>
+      <div class="field"><label>Email</label><input type="email" id="in-email" placeholder="agent@realty.ru" inputmode="email" autocomplete="email"></div>
+      <div class="field"><label>Пароль</label><input type="password" id="in-pass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-auth" onclick="doLogin()">Войти</button>
+    </div>
+    <div id="af-up" class="hidden">
+      <div class="auth-title">Создать аккаунт</div>
+      <div class="auth-sub">Быстрая регистрация</div>
+      <div id="err-up" class="auth-err"></div>
+      <div class="field"><label>Имя</label><input type="text" id="up-name" placeholder="Алексей Риелтор" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input type="email" id="up-email" placeholder="agent@realty.ru" inputmode="email" autocomplete="email"></div>
+      <div class="field"><label>Пароль</label><input type="password" id="up-pass" placeholder="Минимум 6 символов" autocomplete="new-password"></div>
+      <button class="btn-auth" onclick="doReg()">Зарегистрироваться</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="hdr">
+    <div class="hdr-brand">
+      <div class="hdr-icon">🏠</div>
+      <span class="hdr-title">РиелторCRM</span>
+    </div>
+    <div class="hdr-right">
+      <button class="hdr-search" onclick="toggleSearch()">🔍</button>
+      <div class="hdr-user" id="hdr-user" onclick="openUser()"></div>
+    </div>
+  </header>
+
+  <div class="pages">
+
+    <!-- DASHBOARD -->
+    <div class="pg on scroll" id="pg-dash">
+      <div class="ph"><div class="ph-left"><h2>Дашборд</h2><p id="dash-date"></p></div></div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div style="padding:0 12px 8px"><div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">Ближайшие задачи</div>
+        <div id="dash-tasks"></div>
+      </div>
+      <div style="padding:0 12px 16px"><div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">Последние клиенты</div>
+        <div id="dash-clients"></div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="pg" id="pg-clients" style="background:var(--fog)">
+      <div class="ph">
+        <div class="ph-left"><h2>Клиенты</h2><p id="clients-count"></p></div>
+        <button class="btn-add" onclick="openDrawer('client')">+</button>
+      </div>
+      <div class="search-bar hidden" id="search-clients">
+        <div class="search-wrap"><input class="search-input" placeholder="Поиск по имени, телефону..." id="search-clients-input" oninput="filterClients()"></div>
+      </div>
+      <div class="scroll" style="flex:1"><div class="list" id="clients-list"></div></div>
+    </div>
+
+    <!-- OBJECTS -->
+    <div class="pg" id="pg-objects" style="background:var(--fog)">
+      <div class="ph">
+        <div class="ph-left"><h2>Объекты</h2><p id="objects-count"></p></div>
+        <button class="btn-add" onclick="openDrawer('object')">+</button>
+      </div>
+      <div class="scroll" style="flex:1"><div class="list" id="objects-list"></div></div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="pg" id="pg-pipe" style="flex-direction:column">
+      <div class="ph">
+        <div class="ph-left"><h2>Воронка</h2><p id="pipe-count"></p></div>
+        <button class="btn-add" onclick="openDrawer('deal')">+</button>
+      </div>
+      <div class="pipe-scroll" id="pipe-board" style="flex:1;align-items:flex-start"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="pg" id="pg-tasks" style="background:var(--fog)">
+      <div class="ph">
+        <div class="ph-left"><h2>Задачи</h2><p id="tasks-count"></p></div>
+        <button class="btn-add" onclick="openDrawer('task')">+</button>
+      </div>
+      <div class="scroll" style="flex:1"><div style="padding:12px" id="tasks-list"></div></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bnav">
+    <button class="ni on" id="ni-dash" onclick="goto('dash')">
+      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      <span>Дашборд</span>
+    </button>
+    <button class="ni" id="ni-clients" onclick="goto('clients')">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span>Клиенты</span>
+    </button>
+    <button class="ni" id="ni-objects" onclick="goto('objects')">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Объекты</span>
+    </button>
+    <button class="ni" id="ni-pipe" onclick="goto('pipe')">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm4 5h12v2H8zm4 5h8v2h-8z"/></svg>
+      <span>Воронка</span>
+    </button>
+    <button class="ni" id="ni-tasks" onclick="goto('tasks')">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      <span>Задачи</span>
+    </button>
+  </nav>
+</div>
+
+<!-- DETAIL PAGE (full screen) -->
+<div id="detail-page" style="position:fixed;inset:0;background:var(--fog);z-index:400;display:none;flex-direction:column;overflow-y:auto">
+  <div id="detail-content"></div>
+</div>
+
+<!-- OVERLAY + DRAWER -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-hdr">
+    <h3 id="drawer-title">Добавить</h3>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<!-- USER DRAWER -->
+<div class="overlay" id="user-overlay" onclick="closeUser()"></div>
+<div class="drawer" id="user-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-hdr"><h3>Аккаунт</h3><button class="drawer-close" onclick="closeUser()">✕</button></div>
+  <div class="drawer-body">
+    <div style="display:flex;align-items:center;gap:14px;padding:4px 0 20px;border-bottom:1px solid var(--fog2);margin-bottom:20px">
+      <div id="user-av" style="width:52px;height:52px;border-radius:50%;background:var(--mid);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;font-family:'Unbounded',sans-serif"></div>
+      <div><div id="user-name" style="font-size:16px;font-weight:700;color:var(--ink)"></div><div id="user-email" style="font-size:13px;color:var(--text3);margin-top:3px"></div></div>
+    </div>
+    <button class="btn-danger" onclick="doLogout()" style="border-color:#FFCCD3">Выйти из аккаунта</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+const STAGES = [
+  {id:'lead',    label:'Новый лид',   color:'#FF6B35'},
+  {id:'show',    label:'Показ',       color:'#4A6FA5'},
+  {id:'nego',    label:'Переговоры',  color:'#FFB347'},
+  {id:'deposit', label:'Задаток',     color:'#2EC4B6'},
+  {id:'done',    label:'Сделка ✓',    color:'#06D6A0'},
+  {id:'fail',    label:'Отказ',       color:'#EF233C'},
+];
+const STATUS_LABELS = {lead:'Новый лид',work:'В работе',show:'Показ',nego:'Переговоры',deposit:'Задаток',done:'Сделка',fail:'Отказ'};
+const COLORS = ['#FF6B35','#4A6FA5','#2EC4B6','#8B5CF6','#06D6A0','#FFB347','#EF233C','#E91E8C'];
+
+let U = null; // current user
+let DB = {}; // { clients:[], objects:[], deals:[], tasks:[], history:[] }
+let users = {};
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function init() {
+  users = JSON.parse(localStorage.getItem('crm_users') || '{}');
+  const s = localStorage.getItem('crm_session');
+  if (s && users[s]) { U = {email:s, name:users[s].name}; loadDB(); showApp(); return; }
+  document.getElementById('auth').style.display = '';
+}
+
+function loadDB() {
+  DB = JSON.parse(localStorage.getItem('crm_db_' + U.email) || '{"clients":[],"objects":[],"deals":[],"tasks":[],"history":[]}');
+}
+function saveDB() { localStorage.setItem('crm_db_' + U.email, JSON.stringify(DB)); }
+
+// ════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════
+function authTab(t) {
+  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(i===0)===(t==='in')));
+  document.getElementById('af-in').classList.toggle('hidden', t!=='in');
+  document.getElementById('af-up').classList.toggle('hidden', t!=='up');
+}
+function doLogin() {
+  const email = v('in-email'), pass = v('in-pass'), err = ge('err-in');
+  err.style.display='none';
+  if (!email||!pass){showErr(err,'Заполните все поля');return}
+  if (!users[email]){showErr(err,'Пользователь не найден');return}
+  if (users[email].pass !== btoa(pass)){showErr(err,'Неверный пароль');return}
+  U = {email, name:users[email].name};
+  localStorage.setItem('crm_session', email);
+  loadDB(); showApp();
+}
+function doReg() {
+  const name=v('up-name'),email=v('up-email'),pass=v('up-pass'),err=ge('err-up');
+  err.style.display='none';
+  if (!name||!email||!pass){showErr(err,'Заполните все поля');return}
+  if (pass.length<6){showErr(err,'Пароль минимум 6 символов');return}
+  if (!/\S+@\S+\.\S+/.test(email)){showErr(err,'Некорректный email');return}
+  if (users[email]){showErr(err,'Email уже зарегистрирован');return}
+  users[email]={name,pass:btoa(pass)};
+  localStorage.setItem('crm_users',JSON.stringify(users));
+  U={email,name}; localStorage.setItem('crm_session',email);
+  loadDB(); showApp(); toast('Добро пожаловать, '+name+'!','ok');
+}
+function doLogout() { localStorage.removeItem('crm_session'); U=null; closeUser(); location.reload(); }
+function showApp() {
+  ge('auth').style.display='none';
+  ge('app').classList.add('on');
+  const ini = U.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  ge('hdr-user').textContent = ini;
+  ge('user-av').textContent = ini;
+  ge('user-name').textContent = U.name;
+  ge('user-email').textContent = U.email;
+  ge('dash-date').textContent = new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+  renderAll();
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+let curPage = 'dash';
+function goto(p) {
+  curPage = p;
+  document.querySelectorAll('.pg').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(el=>el.classList.remove('on'));
+  ge('pg-'+p).classList.add('on');
+  ge('ni-'+p).classList.add('on');
+  renderPage(p);
+}
+function renderPage(p) {
+  if (p==='dash') renderDash();
+  if (p==='clients') renderClients();
+  if (p==='objects') renderObjects();
+  if (p==='pipe') renderPipe();
+  if (p==='tasks') renderTasks();
+}
+function renderAll() { renderPage(curPage); }
+
+// Search toggle
+let searchOpen = false;
+function toggleSearch() {
+  const sb = ge('search-clients');
+  if (curPage !== 'clients') { goto('clients'); setTimeout(()=>{searchOpen=false;toggleSearch()},100); return; }
+  searchOpen = !searchOpen;
+  sb.classList.toggle('hidden', !searchOpen);
+  if (searchOpen) ge('search-clients-input').focus();
+}
+
+// ════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════
+function renderDash() {
+  const active = DB.deals.filter(d=>d.stage!=='done'&&d.stage!=='fail').length;
+  const done = DB.deals.filter(d=>d.stage==='done').length;
+  const overdue = DB.tasks.filter(t=>!t.done&&t.date&&new Date(t.date)<new Date()).length;
+  ge('stats-grid').innerHTML = `
+    <div class="stat-card accent"><div class="stat-num">${DB.clients.length}</div><div class="stat-label">Клиентов</div></div>
+    <div class="stat-card"><div class="stat-num">${DB.objects.length}</div><div class="stat-label">Объектов</div></div>
+    <div class="stat-card teal"><div class="stat-num">${active}</div><div class="stat-label">Активных сделок</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:${overdue>0?'var(--red)':'var(--ink)'}">${overdue}</div><div class="stat-label">Просроченных задач</div></div>
+  `;
+  const upcoming = DB.tasks.filter(t=>!t.done).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,3);
+  ge('dash-tasks').innerHTML = upcoming.length ? upcoming.map(t=>taskHTML(t)).join('') :
+    '<div style="color:var(--text3);font-size:13px;padding:8px 0">Нет активных задач</div>';
+  const recent = [...DB.clients].reverse().slice(0,3);
+  ge('dash-clients').innerHTML = recent.length ? recent.map(c=>clientCardHTML(c,true)).join('') :
+    '<div style="color:var(--text3);font-size:13px;padding:8px 0">Клиенты не добавлены</div>';
+}
+
+// ════════════════════════════════════════
+// CLIENTS
+// ════════════════════════════════════════
+function renderClients(list) {
+  const items = list || DB.clients;
+  ge('clients-count').textContent = items.length + ' клиентов';
+  ge('clients-list').innerHTML = items.length ? items.map(c=>clientCardHTML(c)).join('') :
+    '<div class="empty"><div class="empty-icon">👥</div><p>Клиентов пока нет.<br>Нажмите + чтобы добавить</p></div>';
+}
+function filterClients() {
+  const q = ge('search-clients-input').value.toLowerCase();
+  renderClients(DB.clients.filter(c=>(c.name+c.phone+c.email).toLowerCase().includes(q)));
+}
+function clientCardHTML(c, mini=false) {
+  const color = COLORS[c.name.charCodeAt(0)%COLORS.length];
+  const ini = c.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const badge = `<span class="badge s-${c.status||'lead'}">${STATUS_LABELS[c.status||'lead']}</span>`;
+  return `<div class="card" onclick="openClient('${c.id}')">
+    <div class="card-accent-bar" style="background:${color}"></div>
+    <div class="card-row">
+      <div class="card-avatar" style="background:${color}">${esc(ini)}</div>
+      <div class="card-body">
+        <div class="card-name">${esc(c.name)}</div>
+        <div class="card-sub">${esc(c.phone||'Телефон не указан')}</div>
+      </div>
+      <div class="card-right">${badge}</div>
+    </div>
+    ${!mini&&c.notes?`<div class="card-meta"><span>📝 ${esc(c.notes.slice(0,60))}${c.notes.length>60?'…':''}</span></div>`:''}
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// OBJECTS
+// ════════════════════════════════════════
+function renderObjects() {
+  ge('objects-count').textContent = DB.objects.length + ' объектов';
+  ge('objects-list').innerHTML = DB.objects.length ? DB.objects.map(o=>objCardHTML(o)).join('') :
+    '<div class="empty"><div class="empty-icon">🏠</div><p>Объектов пока нет.<br>Нажмите + чтобы добавить</p></div>';
+}
+function objCardHTML(o) {
+  const types = {flat:'Квартира',house:'Дом',commercial:'Коммерция',land:'Участок'};
+  return `<div class="card" onclick="openObject('${o.id}')">
+    <div class="card-row">
+      <div class="card-avatar" style="background:var(--mid);font-size:20px">🏠</div>
+      <div class="card-body">
+        <div class="card-name">${esc(o.address)}</div>
+        <div class="card-sub">${esc(types[o.type]||o.type||'')}${o.area?' · '+o.area+' м²':''}</div>
+      </div>
+      <div class="card-right">
+        <span style="font-size:13px;font-weight:700;color:var(--accent)">${o.price?fmt(o.price)+' ₽':''}</span>
+      </div>
+    </div>
+    ${o.cian?`<div class="card-meta"><span>🔗 <a href="${esc(o.cian)}" target="_blank" onclick="event.stopPropagation()">ЦИАН</a></span></div>`:''}
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// PIPELINE
+// ════════════════════════════════════════
+function renderPipe() {
+  const total = DB.deals.filter(d=>d.stage!=='done'&&d.stage!=='fail').length;
+  ge('pipe-count').textContent = total + ' активных';
+  const board = ge('pipe-board');
+  board.innerHTML = STAGES.map(st => {
+    const deals = DB.deals.filter(d=>d.stage===st.id);
+    const cards = deals.map(d => {
+      const client = DB.clients.find(c=>c.id===d.clientId);
+      const obj = DB.objects.find(o=>o.id===d.objectId);
+      return `<div class="pipe-card" onclick="openDeal('${d.id}')">
+        <div class="pipe-card-name">${esc(obj?obj.address:d.title||'Сделка')}</div>
+        <div class="pipe-card-client">👤 ${esc(client?client.name:'Клиент не указан')}</div>
+        ${d.price?`<div class="pipe-card-price">${fmt(d.price)} ₽</div>`:''}
+      </div>`;
+    }).join('');
+    return `<div class="pipe-col">
+      <div class="pipe-col-hdr">
+        <div class="pipe-col-title"><div class="dot" style="background:${st.color}"></div>${esc(st.label)}</div>
+        <div class="pipe-col-count">${deals.length} ${deals.length===1?'сделка':deals.length<5?'сделки':'сделок'}</div>
+      </div>
+      <div class="pipe-col-body">${cards||'<div style="color:var(--text3);font-size:12px;padding:8px">Пусто</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// TASKS
+// ════════════════════════════════════════
+function renderTasks() {
+  const active = DB.tasks.filter(t=>!t.done).length;
+  ge('tasks-count').textContent = active + ' активных';
+  const sorted = [...DB.tasks].sort((a,b)=>{
+    if (a.done !== b.done) return a.done?1:-1;
+    return new Date(a.date||'9999')-new Date(b.date||'9999');
+  });
+  ge('tasks-list').innerHTML = sorted.length ? sorted.map(t=>taskHTML(t)).join('') :
+    '<div class="empty"><div class="empty-icon">✅</div><p>Задач нет.<br>Нажмите + чтобы добавить</p></div>';
+}
+function taskHTML(t) {
+  const client = DB.clients.find(c=>c.id===t.clientId);
+  const overdue = t.date && !t.done && new Date(t.date) < new Date();
+  const dateStr = t.date ? new Date(t.date).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  return `<div class="task-item" onclick="openDrawer('task-edit','${t.id}')">
+    <div class="task-check ${t.done?'done':''}" onclick="event.stopPropagation();toggleTask('${t.id}')">${t.done?'✓':''}</div>
+    <div class="task-body">
+      <div class="task-title ${t.done?'done':''}">${esc(t.title)}</div>
+      <div class="task-meta ${overdue?'task-overdue':''}">${dateStr?'🕐 '+dateStr:''}${client?' · 👤 '+esc(client.name):''}</div>
+    </div>
+  </div>`;
+}
+function toggleTask(id) {
+  const t = DB.tasks.find(t=>t.id===id);
+  if (t) { t.done=!t.done; saveDB(); renderPage(curPage); renderDash(); toast(t.done?'Задача выполнена ✓':'Задача возобновлена','ok'); }
+}
+
+// ════════════════════════════════════════
+// DETAIL VIEWS
+// ════════════════════════════════════════
+function openClient(id) {
+  const c = DB.clients.find(x=>x.id===id); if (!c) return;
+  const color = COLORS[c.name.charCodeAt(0)%COLORS.length];
+  const ini = c.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const hist = DB.history.filter(h=>h.clientId===id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const deals = DB.deals.filter(d=>d.clientId===id);
+  const stage = STAGES.find(s=>s.id===c.status);
+  ge('detail-content').innerHTML = `
+    <div class="detail-header">
+      <button class="detail-back" onclick="closeDetail()">‹ Назад</button>
+      <div class="detail-avatar" style="background:${color}">${esc(ini)}</div>
+      <div class="detail-name">${esc(c.name)}</div>
+      <div class="detail-sub">${esc(STATUS_LABELS[c.status||'lead'])}</div>
+      <div class="detail-actions">
+        ${c.phone?`<button class="action-btn call" onclick="window.location='tel:${esc(c.phone)}';addHistory('${id}','📞 Звонок')"><span>📞</span>Позвонить</button>`:''}
+        <button class="action-btn note" onclick="addHistoryPrompt('${id}')"><span>📝</span>Заметка</button>
+        <button class="action-btn edit" onclick="openDrawer('client-edit','${id}')"><span>✏️</span>Изменить</button>
+        <button class="action-btn del" onclick="deleteClient('${id}')"><span>🗑</span>Удалить</button>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="info-card">
+        <h4>Контакты</h4>
+        ${infoRow('Телефон',c.phone?`<a href="tel:${esc(c.phone)}">${esc(c.phone)}</a>`:'-')}
+        ${infoRow('Email',c.email||'-')}
+        ${infoRow('Источник',c.source||'-')}
+        ${infoRow('Бюджет',c.budget?fmt(c.budget)+' ₽':'-')}
+        ${infoRow('Заметки',c.notes||'-')}
+      </div>
+      ${deals.length?`<div class="info-card"><h4>Сделки (${deals.length})</h4>${deals.map(d=>{
+        const obj=DB.objects.find(o=>o.id===d.objectId);
+        const st=STAGES.find(s=>s.id===d.stage);
+        return `<div class="info-row"><span class="info-label">${esc(obj?obj.address:d.title||'Сделка')}</span><span class="badge" style="background:${st?st.color+'22':'#eee'};color:${st?st.color:'#666'}">${esc(st?st.label:'')}</span></div>`;
+      }).join('')}</div>`:''}
+      <div class="info-card">
+        <h4>История (${hist.length})</h4>
+        ${hist.length?hist.map(h=>`<div class="hist-item"><div class="hist-dot" style="background:var(--mid)"></div><div><div class="hist-text">${esc(h.text)}</div><div class="hist-date">${new Date(h.date).toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join(''):'<div style="color:var(--text3);font-size:13px">История пуста</div>'}
+      </div>
+    </div>`;
+  ge('detail-page').style.display='flex';
+}
+
+function openObject(id) {
+  const o = DB.objects.find(x=>x.id===id); if (!o) return;
+  const types = {flat:'Квартира',house:'Дом',commercial:'Коммерция',land:'Участок'};
+  ge('detail-content').innerHTML = `
+    <div class="detail-header">
+      <button class="detail-back" onclick="closeDetail()">‹ Назад</button>
+      <div style="font-size:48px;margin-bottom:12px">🏠</div>
+      <div class="detail-name">${esc(o.address)}</div>
+      <div class="detail-sub">${esc(types[o.type]||o.type||'')}${o.area?' · '+o.area+' м²':''}</div>
+      <div class="detail-actions">
+        ${o.cian?`<button class="action-btn call" onclick="window.open('${esc(o.cian)}','_blank')"><span>🔗</span>ЦИАН</button>`:''}
+        <button class="action-btn edit" onclick="openDrawer('object-edit','${id}')"><span>✏️</span>Изменить</button>
+        <button class="action-btn del" onclick="deleteObject('${id}')"><span>🗑</span>Удалить</button>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="info-card">
+        <h4>Информация</h4>
+        ${infoRow('Адрес',o.address||'-')}
+        ${infoRow('Тип',types[o.type]||o.type||'-')}
+        ${infoRow('Площадь',o.area?o.area+' м²':'-')}
+        ${infoRow('Цена',o.price?fmt(o.price)+' ₽':'-')}
+        ${infoRow('Этаж',o.floor||'-')}
+        ${infoRow('Комнат',o.rooms||'-')}
+        ${infoRow('Ссылка ЦИАН',o.cian?`<a href="${esc(o.cian)}" target="_blank">Открыть →</a>`:'-')}
+        ${infoRow('Описание',o.notes||'-')}
+      </div>
+    </div>`;
+  ge('detail-page').style.display='flex';
+}
+
+function openDeal(id) {
+  const d = DB.deals.find(x=>x.id===id); if (!d) return;
+  const client = DB.clients.find(c=>c.id===d.clientId);
+  const obj = DB.objects.find(o=>o.id===d.objectId);
+  const st = STAGES.find(s=>s.id===d.stage);
+  ge('detail-content').innerHTML = `
+    <div class="detail-header">
+      <button class="detail-back" onclick="closeDetail()">‹ Назад</button>
+      <div style="font-size:48px;margin-bottom:12px">🤝</div>
+      <div class="detail-name">${esc(obj?obj.address:d.title||'Сделка')}</div>
+      <div class="detail-sub" style="display:flex;align-items:center;gap:8px;justify-content:center">
+        <span style="width:8px;height:8px;border-radius:50%;background:${st?st.color:'#ccc'};display:inline-block"></span>
+        ${esc(st?st.label:'')}
+      </div>
+      <div class="detail-actions">
+        <button class="action-btn edit" onclick="openDrawer('deal-edit','${id}')"><span>✏️</span>Изменить</button>
+        <button class="action-btn del" onclick="deleteDeal('${id}')"><span>🗑</span>Удалить</button>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="info-card">
+        <h4>Детали сделки</h4>
+        ${infoRow('Клиент',client?esc(client.name):'-')}
+        ${infoRow('Объект',obj?esc(obj.address):'-')}
+        ${infoRow('Этап',st?esc(st.label):'-')}
+        ${infoRow('Сумма',d.price?fmt(d.price)+' ₽':'-')}
+        ${infoRow('Комиссия',d.commission?fmt(d.commission)+' ₽':'-')}
+        ${infoRow('Заметки',d.notes||'-')}
+      </div>
+    </div>`;
+  ge('detail-page').style.display='flex';
+}
+
+function closeDetail() { ge('detail-page').style.display='none'; renderPage(curPage); }
+function infoRow(label,val){return `<div class="info-row"><span class="info-label">${label}</span><span class="info-val">${val}</span></div>`}
+
+// ════════════════════════════════════════
+// HISTORY
+// ════════════════════════════════════════
+function addHistory(clientId, text) {
+  DB.history.push({id:uid(),clientId,text,date:new Date().toISOString()});
+  saveDB(); toast('Записано в историю','ok');
+  openClient(clientId);
+}
+function addHistoryPrompt(clientId) {
+  const text = prompt('Добавить заметку:'); if (!text) return;
+  addHistory(clientId, '📝 '+text);
+}
+
+// ════════════════════════════════════════
+// FORMS / DRAWER
+// ════════════════════════════════════════
+function openDrawer(type, editId) {
+  const d = ge('drawer');
+  ge('overlay').classList.add('on');
+  d.classList.add('on');
+  const forms = {
+    client: clientForm,
+    'client-edit': ()=>clientForm(editId),
+    object: objectForm,
+    'object-edit': ()=>objectForm(editId),
+    deal: dealForm,
+    'deal-edit': ()=>dealForm(editId),
+    task: taskForm,
+    'task-edit': ()=>taskForm(editId),
+  };
+  const fn = forms[type]; if (fn) fn();
+}
+function closeDrawer() {
+  ge('overlay').classList.remove('on');
+  ge('drawer').classList.remove('on');
+}
+
+function clientForm(editId) {
+  const c = editId ? DB.clients.find(x=>x.id===editId) : null;
+  ge('drawer-title').textContent = c ? 'Редактировать клиента' : 'Новый клиент';
+  ge('drawer-body').innerHTML = `
+    <div class="form-field"><label>Имя *</label><input id="f-name" value="${esc(c?.name||'')}" placeholder="Иван Иванов"></div>
+    <div class="form-row">
+      <div class="form-field"><label>Телефон</label><input id="f-phone" value="${esc(c?.phone||'')}" placeholder="+7 900 000 00 00" type="tel"></div>
+      <div class="form-field"><label>Email</label><input id="f-email" value="${esc(c?.email||'')}" placeholder="mail@mail.ru" type="email" inputmode="email"></div>
+    </div>
+    <div class="form-field"><label>Статус</label><select id="f-status">
+      ${Object.entries(STATUS_LABELS).map(([k,v])=>`<option value="${k}" ${(c?.status||'lead')===k?'selected':''}>${v}</option>`).join('')}
+    </select></div>
+    <div class="form-row">
+      <div class="form-field"><label>Бюджет ₽</label><input id="f-budget" value="${esc(c?.budget||'')}" placeholder="5000000" type="number" inputmode="numeric"></div>
+      <div class="form-field"><label>Источник</label><input id="f-source" value="${esc(c?.source||'')}" placeholder="Авито, сарафан..."></div>
+    </div>
+    <div class="form-field"><label>Заметки</label><textarea id="f-notes" placeholder="Пожелания клиента...">${esc(c?.notes||'')}</textarea></div>
+    <button class="btn-submit" onclick="saveClient('${editId||''}')">Сохранить</button>
+    ${c?`<button class="btn-danger" onclick="deleteClient('${editId}')">Удалить клиента</button>`:''}
+  `;
+}
+function saveClient(editId) {
+  const name = v('f-name'); if (!name){toast('Введите имя','err');return}
+  const data = {name,phone:v('f-phone'),email:v('f-email'),status:v('f-status'),budget:v('f-budget'),source:v('f-source'),notes:v('f-notes')};
+  if (editId) { const i=DB.clients.findIndex(x=>x.id===editId); if(i>=0) DB.clients[i]={...DB.clients[i],...data}; }
+  else { DB.clients.push({id:uid(),...data}); }
+  saveDB(); closeDrawer(); renderPage(curPage); renderDash();
+  toast(editId?'Клиент обновлён':'Клиент добавлен ✓','ok');
+  if (editId) { closeDetail(); openClient(editId); }
+}
+function deleteClient(id) {
+  if (!confirm('Удалить клиента?')) return;
+  DB.clients = DB.clients.filter(x=>x.id!==id);
+  DB.history = DB.history.filter(x=>x.clientId!==id);
+  saveDB(); closeDrawer(); closeDetail(); goto('clients'); toast('Клиент удалён');
+}
+
+function objectForm(editId) {
+  const o = editId ? DB.objects.find(x=>x.id===editId) : null;
+  ge('drawer-title').textContent = o ? 'Редактировать объект' : 'Новый объект';
+  ge('drawer-body').innerHTML = `
+    <div class="form-field"><label>Адрес *</label><input id="f-addr" value="${esc(o?.address||'')}" placeholder="ул. Ленина, 10, кв. 5"></div>
+    <div class="form-row">
+      <div class="form-field"><label>Тип</label><select id="f-type">
+        <option value="flat" ${o?.type==='flat'?'selected':''}>Квартира</option>
+        <option value="house" ${o?.type==='house'?'selected':''}>Дом</option>
+        <option value="commercial" ${o?.type==='commercial'?'selected':''}>Коммерция</option>
+        <option value="land" ${o?.type==='land'?'selected':''}>Участок</option>
+      </select></div>
+      <div class="form-field"><label>Комнат</label><input id="f-rooms" value="${esc(o?.rooms||'')}" placeholder="2" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Цена ₽</label><input id="f-price" value="${esc(o?.price||'')}" placeholder="8500000" type="number" inputmode="numeric"></div>
+      <div class="form-field"><label>Площадь м²</label><input id="f-area" value="${esc(o?.area||'')}" placeholder="54" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Этаж</label><input id="f-floor" value="${esc(o?.floor||'')}" placeholder="5/9"></div>
+      <div class="form-field"><label>Год постройки</label><input id="f-year" value="${esc(o?.year||'')}" placeholder="2005"></div>
+    </div>
+    <div class="form-field"><label>Ссылка ЦИАН</label><input id="f-cian" value="${esc(o?.cian||'')}" placeholder="https://cian.ru/..." type="url"></div>
+    <div class="form-field"><label>Описание</label><textarea id="f-notes" placeholder="Описание объекта...">${esc(o?.notes||'')}</textarea></div>
+    <button class="btn-submit" onclick="saveObject('${editId||''}')">Сохранить</button>
+    ${o?`<button class="btn-danger" onclick="deleteObject('${editId}')">Удалить объект</button>`:''}
+  `;
+}
+function saveObject(editId) {
+  const address = v('f-addr'); if (!address){toast('Введите адрес','err');return}
+  const data = {address,type:v('f-type'),rooms:v('f-rooms'),price:v('f-price'),area:v('f-area'),floor:v('f-floor'),year:v('f-year'),cian:v('f-cian'),notes:v('f-notes')};
+  if (editId) { const i=DB.objects.findIndex(x=>x.id===editId); if(i>=0) DB.objects[i]={...DB.objects[i],...data}; }
+  else { DB.objects.push({id:uid(),...data}); }
+  saveDB(); closeDrawer(); renderPage(curPage); renderDash();
+  toast(editId?'Объект обновлён':'Объект добавлен ✓','ok');
+  if (editId) { closeDetail(); openObject(editId); }
+}
+function deleteObject(id) {
+  if (!confirm('Удалить объект?')) return;
+  DB.objects = DB.objects.filter(x=>x.id!==id);
+  saveDB(); closeDrawer(); closeDetail(); goto('objects'); toast('Объект удалён');
+}
+
+function dealForm(editId) {
+  const d = editId ? DB.deals.find(x=>x.id===editId) : null;
+  ge('drawer-title').textContent = d ? 'Редактировать сделку' : 'Новая сделка';
+  const clientOpts = DB.clients.map(c=>`<option value="${c.id}" ${d?.clientId===c.id?'selected':''}>${esc(c.name)}</option>`).join('');
+  const objOpts = DB.objects.map(o=>`<option value="${o.id}" ${d?.objectId===o.id?'selected':''}>${esc(o.address)}</option>`).join('');
+  const stageOpts = STAGES.map(s=>`<option value="${s.id}" ${(d?.stage||'lead')===s.id?'selected':''}>${esc(s.label)}</option>`).join('');
+  ge('drawer-body').innerHTML = `
+    <div class="form-field"><label>Клиент</label><select id="f-client"><option value="">— Выбрать клиента —</option>${clientOpts}</select></div>
+    <div class="form-field"><label>Объект</label><select id="f-object"><option value="">— Выбрать объект —</option>${objOpts}</select></div>
+    <div class="form-field"><label>Этап</label><select id="f-stage">${stageOpts}</select></div>
+    <div class="form-row">
+      <div class="form-field"><label>Сумма ₽</label><input id="f-price" value="${esc(d?.price||'')}" placeholder="8500000" type="number" inputmode="numeric"></div>
+      <div class="form-field"><label>Комиссия ₽</label><input id="f-comm" value="${esc(d?.commission||'')}" placeholder="255000" type="number" inputmode="numeric"></div>
+    </div>
+    <div class="form-field"><label>Заметки</label><textarea id="f-notes" placeholder="Детали сделки...">${esc(d?.notes||'')}</textarea></div>
+    <button class="btn-submit" onclick="saveDeal('${editId||''}')">Сохранить</button>
+    ${d?`<button class="btn-danger" onclick="deleteDeal('${editId}')">Удалить сделку</button>`:''}
+  `;
+}
+function saveDeal(editId) {
+  const data = {clientId:v('f-client'),objectId:v('f-object'),stage:v('f-stage'),price:v('f-price'),commission:v('f-comm'),notes:v('f-notes')};
+  if (!data.clientId && !data.objectId){toast('Выберите клиента или объект','err');return}
+  if (editId) { const i=DB.deals.findIndex(x=>x.id===editId); if(i>=0) DB.deals[i]={...DB.deals[i],...data}; }
+  else { DB.deals.push({id:uid(),...data}); }
+  saveDB(); closeDrawer(); renderPage(curPage); renderDash();
+  toast(editId?'Сделка обновлена':'Сделка добавлена ✓','ok');
+  if (editId) { closeDetail(); openDeal(editId); }
+}
+function deleteDeal(id) {
+  if (!confirm('Удалить сделку?')) return;
+  DB.deals = DB.deals.filter(x=>x.id!==id);
+  saveDB(); closeDrawer(); closeDetail(); goto('pipe'); toast('Сделка удалена');
+}
+
+function taskForm(editId) {
+  const t = editId ? DB.tasks.find(x=>x.id===editId) : null;
+  ge('drawer-title').textContent = t ? 'Редактировать задачу' : 'Новая задача';
+  const clientOpts = DB.clients.map(c=>`<option value="${c.id}" ${t?.clientId===c.id?'selected':''}>${esc(c.name)}</option>`).join('');
+  const dtVal = t?.date ? new Date(t.date).toISOString().slice(0,16) : '';
+  ge('drawer-body').innerHTML = `
+    <div class="form-field"><label>Задача *</label><input id="f-title" value="${esc(t?.title||'')}" placeholder="Позвонить клиенту, показ квартиры..."></div>
+    <div class="form-field"><label>Дата и время</label><input id="f-date" type="datetime-local" value="${dtVal}"></div>
+    <div class="form-field"><label>Клиент</label><select id="f-client"><option value="">— Без клиента —</option>${clientOpts}</select></div>
+    <div class="form-field"><label>Заметки</label><textarea id="f-notes" placeholder="Детали...">${esc(t?.notes||'')}</textarea></div>
+    <button class="btn-submit" onclick="saveTask('${editId||''}')">Сохранить</button>
+    ${t?`<button class="btn-danger" onclick="deleteTask('${editId}')">Удалить задачу</button>`:''}
+  `;
+}
+function saveTask(editId) {
+  const title = v('f-title'); if (!title){toast('Введите задачу','err');return}
+  const date = ge('f-date').value;
+  const data = {title,date:date?new Date(date).toISOString():'',clientId:v('f-client'),notes:v('f-notes'),done:false};
+  if (editId) { const i=DB.tasks.findIndex(x=>x.id===editId); if(i>=0) DB.tasks[i]={...DB.tasks[i],...data,done:DB.tasks[i].done}; }
+  else { DB.tasks.push({id:uid(),...data}); }
+  saveDB(); closeDrawer(); renderPage(curPage); renderDash();
+  toast(editId?'Задача обновлена':'Задача добавлена ✓','ok');
+}
+function deleteTask(id) {
+  if (!confirm('Удалить задачу?')) return;
+  DB.tasks = DB.tasks.filter(x=>x.id!==id);
+  saveDB(); closeDrawer(); renderPage(curPage); renderDash(); toast('Задача удалена');
+}
+
+// ════════════════════════════════════════
+// USER DRAWER
+// ════════════════════════════════════════
+function openUser() {
+  ge('user-overlay').classList.add('on');
+  ge('user-drawer').classList.add('on');
+}
+function closeUser() {
+  ge('user-overlay').classList.remove('on');
+  ge('user-drawer').classList.remove('on');
+}
+
+// Swipe to close drawers
+['drawer','user-drawer'].forEach(id=>{
+  let sy=0;
+  ge(id).addEventListener('touchstart',e=>{sy=e.touches[0].clientY},{passive:true});
+  ge(id).addEventListener('touchmove',e=>{if(e.touches[0].clientY-sy>60){id==='drawer'?closeDrawer():closeUser()}},{passive:true});
+});
+
+// ════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════
+function ge(id){return document.getElementById(id)}
+function v(id){const el=ge(id);return el?el.value.trim():''}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function fmt(n){return Number(n).toLocaleString('ru-RU')}
+function showErr(el,msg){el.textContent=msg;el.style.display='block'}
+function toast(msg,type=''){
+  const t=ge('toast');t.textContent=msg;t.className='toast on'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3000);
+}
+
+init();
+</script>
+</body>
+</html>
