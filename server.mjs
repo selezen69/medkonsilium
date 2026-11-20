@@ -105,7 +105,7 @@ export function createApp(options = {}) {
       if (method !== 'GET' && req.headers.origin !== origin) fail(403, 'Недопустимый источник запроса.');
       if (!path.startsWith('/api/')) {
         if (method !== 'GET') fail(405, 'Метод не поддерживается.');
-        const assets = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
+        const assets = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/assets/health-hero.webp': ['assets/health-hero.webp', 'image/webp'] };
         const a = assets[path]; if (!a) fail(404, 'Страница не найдена.');
         res.writeHead(200, { 'Content-Type': `${a[1]}; charset=utf-8` }); return res.end(readFileSync(resolve(root, 'public', a[0])));
       }
