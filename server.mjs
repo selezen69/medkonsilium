@@ -16,7 +16,7 @@ const fail = (status, message) => { throw Object.assign(new Error(message), { st
 const text = (v, max = 8000) => typeof v === 'string' && v.trim() && v.trim().length <= max ? v.trim() : fail(400, 'Проверьте заполненные поля.');
 const emailOf = v => { const e = text(v, 254).toLowerCase(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? e : fail(400, 'Укажите корректный email.'); };
 async function passwordHash(password) {
-  if (typeof password !== 'string' || password.length < 12 || password.length > 200) fail(400, 'Пароль: от 12 до 200 символов.');
+  if (typeof password !== 'string' || password.length < 6 || password.length > 200) fail(400, 'Пароль: от 6 до 200 символов.');
   const salt = randomBytes(16).toString('hex');
   return `${salt}:${(await scrypt(password, salt, 64)).toString('hex')}`;
 }

@@ -6,9 +6,9 @@ const app = createApp();
 try {
   const name = await rl.question('Имя администратора: ');
   const email = await rl.question('Email: ');
-  // Read a password without echoing it. The first admin cannot be created over HTTP.
+  // Read a password without echoing it. Browser setup is also available with a one-time bootstrap token.
   if (!stdin.isTTY) throw new Error('Запустите настройку в интерактивном терминале.');
-  stdout.write('Пароль (не менее 12 символов; ввод скрыт): ');
+  stdout.write('Пароль (не менее 6 символов; ввод скрыт): ');
   rl.close(); stdin.setRawMode(true); stdin.resume();
   const password = await new Promise((resolve, reject) => {
     let value = '';

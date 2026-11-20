@@ -6,11 +6,12 @@ import { join } from 'node:path';
 import { createApp } from '../server.mjs';
 import { createAI } from '../ai.mjs';
 
-const password = 'test-family-password-123';
+const password = 'a2#Bc3';
 test('Browser bootstrap is opt-in, secret protected, origin checked and creates exactly one administrator',async()=>{
   const dir=await mkdtemp(join(tmpdir(),'mc-setup-'));
   const secret='test-only-setup-token-at-least-32-characters';
   const app=createApp({dataDir:dir,origin:'http://localhost:3000',bootstrapToken:secret,ai:{enabled:false}});
+  await assert.rejects(()=>app.addAdmin('short@example.test','Ab1#x'),/от 6 до 200/);
   await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));
   const base='http://127.0.0.1:'+app.server.address().port;
   const send=async(token,origin='http://localhost:3000')=>fetch(base+'/api/setup',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({token,name:'Администратор',email:'first@example.test',password})});
