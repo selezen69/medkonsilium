@@ -45,6 +45,8 @@ export function createApp(options = {}) {
   const ai = options.ai || createAI({ apiKey: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL });
   const origin = options.origin || process.env.APP_ORIGIN || 'http://localhost:3000';
   const secure = options.secure ?? process.env.COOKIE_SECURE === 'true';
+  const bootstrapToken = options.bootstrapToken ?? process.env.BOOTSTRAP_TOKEN ?? '';
+  if (bootstrapToken && bootstrapToken.length < 32) throw new Error('BOOTSTRAP_TOKEN должен содержать не менее 32 символов.');
   if (!origin.startsWith('http://localhost:') && !origin.startsWith('http://127.0.0.1:') && (!origin.startsWith('https://') || !secure)) throw new Error('Для внешнего адреса требуются HTTPS и COOKIE_SECURE=true.');
   const rate = new Map();
   const activeJobs = new Set();
@@ -106,6 +108,13 @@ export function createApp(options = {}) {
         const assets = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
         const a = assets[path]; if (!a) fail(404, 'Страница не найдена.');
         res.writeHead(200, { 'Content-Type': `${a[1]}; charset=utf-8` }); return res.end(readFileSync(resolve(root, 'public', a[0])));
+      }
+      if (path === '/api/setup' && method === 'POST') {
+        limit(`setup:${req.socket.remoteAddress}`, 5, 15*60_000);
+        const b = await body(req);
+        if (!bootstrapToken || typeof b.token !== 'string' || !timingSafeEqual(Buffer.from(hash(b.token)), Buffer.from(hash(bootstrapToken))) || one('SELECT id FROM users LIMIT 1')) fail(403, 'Ссылка первого запуска недействительна или уже использована.');
+        await addAdmin(b.email, b.password, b.name);
+        return send(201, { ok: true });
       }
       if (path === '/api/login' && method === 'POST') {
         limit(`login:${req.socket.remoteAddress}`, 12, 15*60_000);

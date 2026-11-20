@@ -7,6 +7,30 @@ import { createApp } from '../server.mjs';
 import { createAI } from '../ai.mjs';
 
 const password = 'test-family-password-123';
+test('Browser bootstrap is opt-in, secret protected, origin checked and creates exactly one administrator',async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'mc-setup-'));
+  const secret='test-only-setup-token-at-least-32-characters';
+  const app=createApp({dataDir:dir,origin:'http://localhost:3000',bootstrapToken:secret,ai:{enabled:false}});
+  await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));
+  const base='http://127.0.0.1:'+app.server.address().port;
+  const send=async(token,origin='http://localhost:3000')=>fetch(base+'/api/setup',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({token,name:'Администратор',email:'first@example.test',password})});
+  try{
+    assert.equal((await send(secret,'https://wrong.example')).status,403);
+    assert.equal((await send('wrong')).status,403);
+    const results=await Promise.all([send(secret),send(secret)]);
+    assert.equal(results.filter(r=>r.status===201).length,1);
+    assert.ok(results.every(r=>[201,403,409].includes(r.status)));
+    assert.equal(app.db.prepare('SELECT COUNT(*) n FROM users').get().n,1);
+    assert.equal((await send(secret)).status,403);
+  }finally{await app.close();await rm(dir,{recursive:true,force:true});}
+  const disabledDir=await mkdtemp(join(tmpdir(),'mc-disabled-'));
+  const disabled=createApp({dataDir:disabledDir,origin:'http://localhost:3000',bootstrapToken:'',ai:{enabled:false}});
+  await new Promise(resolve=>disabled.server.listen(0,'127.0.0.1',resolve));
+  try{
+    const r=await fetch('http://127.0.0.1:'+disabled.server.address().port+'/api/setup',{method:'POST',headers:{Origin:'http://localhost:3000','Content-Type':'application/json'},body:JSON.stringify({token:secret,name:'Test',email:'first@example.test',password})});
+    assert.equal(r.status,403);assert.equal(disabled.db.prepare('SELECT COUNT(*) n FROM users').get().n,0);
+  }finally{await disabled.close();await rm(disabledDir,{recursive:true,force:true});}
+});
 async function fixture(ai) {
   const dataDir = await mkdtemp(join(tmpdir(),'medconsilium-'));
   const app = createApp({dataDir,origin:'http://localhost:3000',secure:false,ai});
