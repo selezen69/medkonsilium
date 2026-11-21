@@ -1,6 +1,9 @@
 export const SPECIALISTS = {
   cardiology: 'Кардиолог', endocrinology: 'Эндокринолог',
   neurology: 'Невролог', gastroenterology: 'Гастроэнтеролог',
+  urology: 'Уролог', rheumatology: 'Ревматолог', dermatology: 'Дерматолог',
+  ophthalmology: 'Офтальмолог', otolaryngology: 'ЛОР',
+  gynecology: 'Гинеколог', pediatrics: 'Педиатр',
 };
 
 const rules = `Ты — ИИ-роль в семейном приложении МедКонсилиум, а не реальный врач.
