@@ -1,0 +1,15 @@
+import {readFileSync as read,writeFileSync as write,mkdirSync,cpSync} from 'node:fs';
+import {dirname,resolve} from 'node:path';import{fileURLToPath}from'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),target=resolve(process.argv[2]||'.');
+let app=read(root+'/public/app.js','utf8');
+app=app.replace('let me, csrf,','let hosted = true;\nlet me, csrf,');
+const start=app.indexOf('function auth() {'),end=app.indexOf('function shell()',start);
+app=app.slice(0,start)+`function auth(){app.innerHTML='<main class="auth-form"><section><h1>МедКонсилиум</h1><p>Войдите своим аккаунтом ChatGPT, которому предоставлен доступ к прототипу.</p><a href="/signin-with-chatgpt?returnTo=%2F" target="_top">Войти через ChatGPT</a><p>Если вы уже вошли, но доступ не появился, обратитесь к владельцу приложения.</p></section></main>'; }\n`+app.slice(end);
+app=app.replace("await api('/api/logout','POST',{});", "location.href='/signout-with-chatgpt?returnTo=%2F';return;");
+app=app.replace("function familyHTML(users,audit){",`function familyHTML(users,audit){if(hosted)return title('Рабочий прототип','Ваша семья','Сейчас доступен личный профиль владельца.')+'<section class="card"><h2>Семейный доступ</h2><p>Приглашения членов семьи подключим отдельно. Медицинские данные не объединяются.</p></section>';`);
+const assets={'/':['text/html; charset=utf-8',read(root+'/public/index.html','utf8')],'/app.js':['text/javascript; charset=utf-8',app],'/style.css':['text/css; charset=utf-8',read(root+'/public/style.css','utf8')],'/assets/health-hero.webp':['image/webp',read(root+'/public/assets/health-hero.webp').toString('base64')]};
+const ai=read(root+'/ai.mjs','utf8').replaceAll('export ','');
+const api=read(root+'/hosted/worker/api.mjs','utf8').replace(/^import[^\n]+\n/,'').replace('export async function api','async function api');
+mkdirSync(target+'/dist/server',{recursive:true});mkdirSync(target+'/drizzle',{recursive:true});
+cpSync(root+'/hosted/drizzle',target+'/drizzle',{recursive:true});
+write(target+'/dist/server/index.js',ai+'\n'+api+'\nconst assets='+JSON.stringify(assets)+`;\nexport default{async fetch(request,env,ctx){const path=new URL(request.url).pathname;if(path.startsWith('/api/'))return api(request,env,ctx);const a=assets[path];if(!a)return new Response('Страница не найдена',{status:404});return new Response(a[0]==='image/webp'?Uint8Array.from(atob(a[1]),c=>c.charCodeAt(0)):a[1],{headers:{'Content-Type':a[0],'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"}})}};`);
