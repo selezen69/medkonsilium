@@ -1,0 +1,27 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import{DatabaseSync}from'node:sqlite';import{readFileSync}from'node:fs';import{api}from'../hosted/worker/api.mjs';
+test('Hosted prototype persists conversations and files, rejects missing identity, CSRF and foreign records',async()=>{
+ const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON;'+readFileSync(new URL('../hosted/drizzle/0000_prototype.sql',import.meta.url),'utf8'));
+ const prepared=(sql,p=[])=>({bind:(...q)=>prepared(sql,q),first:async()=>db.prepare(sql).get(...p)||null,all:async()=>({results:db.prepare(sql).all(...p)}),run:async()=>db.prepare(sql).run(...p)});
+ const objects=new Map(),env={OWNER_EMAIL:'owner@example.test',DB:{prepare:prepared,batch:async ops=>{db.exec('BEGIN');try{const r=[];for(const op of ops)r.push(await op.run());db.exec('COMMIT');return r;}catch(e){db.exec('ROLLBACK');throw e;}}},BUCKET:{put:async(k,b)=>objects.set(k,b),get:async k=>objects.has(k)?{body:objects.get(k)}:null,delete:async k=>objects.delete(k)}};
+ let csrf='';const call=(path,method='GET',data,extra={})=>api(new Request('https://test.local'+path,{method,headers:{origin:'https://test.local','oai-authenticated-user-id':'owner','oai-authenticated-user-email':'owner@example.test','x-csrf-token':csrf,'content-type':'application/json',...extra},...(data?{body:JSON.stringify(data)}:{})}),env,{});
+ assert.equal((await call('/api/me','GET',null,{'oai-authenticated-user-id':''})).status,401);
+ assert.equal((await call('/api/me','GET',null,{'oai-authenticated-user-id':'outsider','oai-authenticated-user-email':'other@example.test'})).status,403);
+ const me=await(await call('/api/me')).json();assert.equal(me.user.name,'Игорь');assert.equal(Object.keys(me.specialists).length,11);assert.equal(me.aiEnabled,false);csrf=me.csrf;
+ assert.equal((await call('/api/profiles/owner/consultations','POST',{question:'Вымышленный вопрос'},{'x-csrf-token':'wrong'})).status,403);
+ assert.equal((await call('/api/profiles/owner/consultations','POST',{question:'Вымышленный вопрос'},{origin:'https://foreign.test'})).status,403);
+ const c=await(await call('/api/profiles/owner/consultations','POST',{question:'Вымышленный вопрос'})).json();assert.ok(c.id);assert.equal(c.messages.length,1);
+ assert.equal((await(await call('/api/profiles/owner/consultations')).json()).length,1);
+ assert.equal((await call('/api/profiles/foreign/consultations/'+c.id)).status,404);
+ const base='/api/profiles/owner/consultations/'+c.id;
+ let uploaded=await(await call(base+'/documents','POST',{name:'fake.pdf',base64:btoa('%PDF-1.4 synthetic')})).json();assert.equal(uploaded.documents.length,1);
+ const d=uploaded.documents[0];assert.equal(await(await call('/api/profiles/owner/documents/'+d.id+'/file')).text(),'%PDF-1.4 synthetic');
+ assert.equal((await call(base+'/documents','POST',{name:'copy.pdf',base64:btoa('%PDF-1.4 synthetic')})).status,409);
+ assert.equal((await call(base+'/documents','POST',{name:'bad.pdf',base64:btoa('not a pdf')})).status,415);
+ assert.equal((await call('/api/profiles/owner/documents/'+d.id,'PATCH',{text:'Вымышленный текст',confirmed:true})).status,200);
+ assert.equal((await(await call(base)).json()).documents[0].confirmed,1);
+ assert.equal((await call(base+'/messages','POST',{text:'Дополнение'})).status,201);
+ assert.equal((await(await call(base)).json()).messages.length,2);
+ assert.equal((await call(base+'/run','POST',{specialists:['cardiology']})).status,503);
+ assert.equal((await call('/api/admin/invitations','POST',{email:'family@example.test'})).status,409);
+ db.close();
+});
